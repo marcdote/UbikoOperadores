@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Operador · Incidencias</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Tablón de incidencias para operadores - Comunidad Plaza Mayor 12">
+
+  <style>
+    :root{
+      --bg:#f4f6f8;
+      --panel:#fff;
+      --muted:#6b7280;
+      --primary:#4f46e5;
+      --primary-dark:#4338ca;
+      --danger:#991b1b;
+      --success:#166534;
+      --card-radius:12px;
+      --container-max:980px;
+    }
+
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background:var(--bg);
+      color:#111827;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .wrap{
+      max-width:var(--container-max);
+      margin:20px auto;
+      padding:0 16px 48px;
+    }
+
+    header{
+      background:#1f2937;
+      color:#fff;
+      padding:18px 20px;
+      border-radius:12px;
+      box-shadow:0 6px 18px rgba(2,6,23,0.12);
+    }
+    header h1{margin:0;font-size:18px}
+    header p{margin:6px 0 0;color:#cbd5e1;font-size:13px}
+
+    /* Tabs */
+    .tabs {
+      display:flex;
+      gap:10px;
+      margin:18px 0;
+      flex-wrap:wrap;
+    }
+    .tab{
+      padding:8px 14px;
+      border-radius:999px;
+      background:#e5e7eb;
+      color:#374151;
+      cursor:pointer;
+      font-size:14px;
+      border:0;
+    }
+    .tab[aria-selected="true"]{
+      background:var(--primary);
+      color:#fff;
+      box-shadow:0 4px 10px rgba(79,70,229,0.18);
+    }
+
+    /* Grid/list */
+    .cards{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+    @media(min-width:860px){
+      .cards{grid-template-columns:repeat(2,1fr)}
+    }
+
+    .card{
+      background:var(--panel);
+      border-radius:var(--card-radius);
+      padding:16px;
+      box-shadow:0 6px 18px rgba(15,23,42,0.06);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .card-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .card-header h2{margin:0;font-size:16px}
+    .meta{color:var(--muted);font-size:14px}
+
+    .estado{
+      font-size:12px;
+      font-weight:700;
+      padding:6px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+    .abierta{background:#fee2e2;color:var(--danger)}
+    .cerrada{background:#dcfce7;color:var(--success)}
+
+    .acciones{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:6px;
+    }
+    .btn{
+      border:0;
+      padding:10px 14px;
+      border-radius:8px;
+      font-size:13px;
+      cursor:pointer;
+    }
+    .btn-sec{background:#eef2ff;color:#1f2937}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-primary:hover{background:var(--primary-dark)}
+    .small{font-size:13px;padding:8px 10px;border-radius:6px}
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center;z-index:60;
+    }
+    .modal{
+      background:var(--panel);padding:18px;border-radius:12px;max-width:720px;width:92%;box-shadow:0 10px 30px rgba(2,6,23,0.3);
+    }
+    .modal h3{margin:0 0 8px}
+    .modal p{margin:0;color:var(--muted)}
+    .modal .controls{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+
+    .hidden{display:none !important}
+
+    /* Upload preview */
+    .preview{
+      width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin-top:8px;border:1px solid #e6e9ee;
+    }
+
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header role="banner" aria-label="Encabezado">
+      <h1>Operador · Tablón de Incidencias</h1>
+      <p>Comunidad Plaza Mayor 12</p>
+    </header>
+
+    <section aria-labelledby="tabs-label" style="margin-top:12px">
+      <div id="tabs-label" class="sr-only" hidden>Filtrar incidencias</div>
+      <div role="tablist" aria-label="Filtro de incidencias" class="tabs">
+        <button class="tab" role="tab" aria-selected="true" data-filter="abierta" id="tab-abiertas">Incidencias abiertas</button>
+        <button class="tab" role="tab" aria-selected="false" data-filter="cerrada" id="tab-cerradas">Incidencias cerradas</button>
+        <button class="tab" role="tab" aria-selected="false" data-filter="todas" id="tab-todas">Todas</button>
+      </div>
+    </section>
+
+    <main class="cards" id="incidencias-list" aria-live="polite">
+      <!-- Tarjeta ejemplo 1 -->
+      <article class="card" data-id="1" data-status="abierta" aria-labelledby="i1-title" role="article">
+        <div class="card-header">
+          <h2 id="i1-title">Fuga de agua en garaje</h2>
+          <span class="estado abierta" aria-hidden="true">Abierta</span>
+        </div>
+
+        <div class="meta">
+          Ubicación: Garaje - Planta -1<br>
+          Fecha asignación: <span class="asignada">2026-03-12</span>
+        </div>
+
+        <div class="acciones">
+          <button class="btn btn-sec ver-instrucciones small" data-id="1" aria-controls="modal" aria-expanded="false">Instrucciones</button>
+          <button class="btn btn-primary completar small" data-id="1">Marcar completada y subir foto</button>
+        </div>
+      </article>
+
+      <!-- Tarjeta ejemplo 2 -->
+      <article class="card" data-id="2" data-status="abierta" aria-labelledby="i2-title" role="article">
+        <div class="card-header">
+          <h2 id="i2-title">Luminaria fundida en escalera</h2>
+          <span class="estado abierta" aria-hidden="true">Abierta</span>
+        </div>
+
+        <div class="meta">
+          Ubicación: Escalera B - Planta 3<br>
+          Fecha asignación: <span class="asignada">2026-03-10</span>
+        </div>
+
+        <div class="acciones">
+          <button class="btn btn-sec ver-instrucciones small" data-id="2" aria-controls="modal" aria-expanded="false">Instrucciones</button>
+          <button class="btn btn-primary completar small" data-id="2">Marcar completada y subir foto</button>
+        </div>
+      </article>
+
+      <!-- Tarjeta cerrada (visual) -->
+      <article class="card" data-id="3" data-status="cerrada" aria-labelledby="i3-title" role="article">
+        <div class="card-header">
+          <h2 id="i3-title">Poda de setos jardín</h2>
+          <span class="estado cerrada" aria-hidden="true">Cerrada</span>
+        </div>
+
+        <div class="meta">
+          Ubicación: Zona ajardinada<br>
+          Cerrada el: <span class="cerrada-fecha">2026-03-05</span>
+        </div>
+
+        <div class="acciones">
+          <button class="btn btn-sec ver-instrucciones small" data-id="3" aria-controls="modal" aria-expanded="false">Ver instrucciones</button>
+        </div>
+      </article>
+    </main>
+
+    <footer>Versión local de demostración · Datos guardados en el navegador</footer>
+  </div>
+
+  <!-- Modal simple para instrucciones y subir foto -->
+  <div id="modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" id="modal" aria-labelledby="modal-title">
+      <h3 id="modal-title">Instrucciones</h3>
+      <div id="modal-body">
+        <p id="instr-text">Cargando...</p>
+        <div id="upload-area" class="hidden">
+          <label for="photo" style="display:block;margin-top:10px;font-weight:600">Subir foto (opcional)</label>
+          <input id="photo" type="file" accept="image/*" />
+          <img id="preview" class="preview hidden" alt="Vista previa de la foto subida">
+        </div>
+      </div>
+
+      <div class="controls" style="margin-top:14px">
+        <button id="close-modal" class="btn btn-sec small">Cerrar</button>
+        <button id="confirm-complete" class="btn btn-primary small hidden">Confirmar y marcar cerrada</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Datos de ejemplo de instrucciones (en real, pedir a API)
+    const INSTRUCCIONES = {
+      "1": "Revisar válvulas, cortar suministro si procede, colocar cubo y avisar portería. Prioridad alta.",
+      "2": "Sustituir bombilla por una de 15W led. Llevar escalera corta y guantes.",
+      "3": "Realizada por el jardinero. No es necesaria acción."
+    };
+
+    // Referencias
+    const tabs = document.querySelectorAll('.tab');
+    const cards = Array.from(document.querySelectorAll('.card'));
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    const modal = document.getElementById('modal');
+    const instrText = document.getElementById('instr-text');
+    const uploadArea = document.getElementById('upload-area');
+    const photoInput = document.getElementById('photo');
+    const preview = document.getElementById('preview');
+    const closeModalBtn = document.getElementById('close-modal');
+    const confirmCompleteBtn = document.getElementById('confirm-complete');
+
+    let currentCardId = null;
+
+    // Filtrar por estado
+    function applyFilter(filter){
+      cards.forEach(c=>{
+        const st = c.dataset.status;
+        if(filter === 'todas' || st === filter){
+          c.classList.remove('hidden');
+        } else {
+          c.classList.add('hidden');
+        }
+      });
+    }
+
+    tabs.forEach(t=>{
+      t.addEventListener('click', ()=>{
+        tabs.forEach(x=>x.setAttribute('aria-selected','false'));
+        t.setAttribute('aria-selected','true');
+        const filter = t.dataset.filter;
+        applyFilter(filter);
+      });
+    });
+
+    // Abrir modal con instrucciones, opción de completar si está abierta
+    document.querySelectorAll('.ver-instrucciones').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const id = btn.dataset.id;
+        currentCardId = id;
+        instrText.textContent = INSTRUCCIONES[id] || 'No hay instrucciones disponibles.';
+        // si la incidencia está abierta, permitir subir foto y confirmar
+        const card = document.querySelector('.card[data-id="' + id + '"]');
+        const isOpen = card && card.dataset.status === 'abierta';
+        if(isOpen){
+          uploadArea.classList.remove('hidden');
+          confirmCompleteBtn.classList.remove('hidden');
+          btn.setAttribute('aria-expanded','true');
+        } else {
+          uploadArea.classList.add('hidden');
+          confirmCompleteBtn.classList.add('hidden');
+          btn.setAttribute('aria-expanded','true');
+        }
+        // reset preview
+        photoInput.value = '';
+        preview.src = '';
+        preview.classList.add('hidden');
+
+        modalBackdrop.style.display = 'flex';
+        modalBackdrop.setAttribute('aria-hidden','false');
+      });
+    });
+
+    // Botón completar directo (abre modal)
+    document.querySelectorAll('.completar').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.id;
+        document.querySelector('.ver-instrucciones[data-id="'+id+'"]').click();
+      });
+    });
+
+    // Cerrar modal
+    function closeModal(){
+      modalBackdrop.style.display = 'none';
+      modalBackdrop.setAttribute('aria-hidden','true');
+      document.querySelectorAll('.ver-instrucciones').forEach(b=>b.setAttribute('aria-expanded','false'));
+      currentCardId = null;
+    }
+    closeModalBtn.addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', (e)=>{
+      if(e.target === modalBackdrop) closeModal();
+    });
+
+    // Preview imagen
+    photoInput.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(!file) { preview.classList.add('hidden'); return; }
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+      preview.classList.remove('hidden');
+    });
+
+    // Confirmar y marcar cerrada (persistir en localStorage)
+    confirmCompleteBtn.addEventListener('click', ()=>{
+      if(!currentCardId) return;
+      const card = document.querySelector('.card[data-id="'+currentCardId+'"]');
+      if(!card) return;
+
+      // Cambiar estado visualmente
+      card.dataset.status = 'cerrada';
+      const estadoSpan = card.querySelector('.estado');
+      if(estadoSpan){
+        estadoSpan.classList.remove('abierta');
+        estadoSpan.classList.add('cerrada');
+        estadoSpan.textContent = 'Cerrada';
+      }
+
+      // Añadir fecha de cierre
+      const now = new Date();
+      const iso = now.toISOString().slice(0,10);
+      let closedEl = card.querySelector('.cerrada-fecha');
+      if(!closedEl){
+        // agregar al meta
+        const meta = card.querySelector('.meta');
+        meta.innerHTML = meta.innerHTML + '<br>Cerrada el: <span class="cerrada-fecha">'+iso+'</span>';
+      } else {
+        closedEl.textContent = iso;
+      }
+
+      // Guardar un registro en localStorage (simulación)
+      const stored = JSON.parse(localStorage.getItem('incidencias_estado') || '{}');
+      stored[currentCardId] = { status: 'cerrada', closed_at: iso, photo: null };
+      // si hay foto, guardamos un DataURL (advertencia: ocupa espacio)
+      const file = photoInput.files[0];
+      if(file){
+        const reader = new FileReader();
+        reader.onload = function(ev){
+          stored[currentCardId].photo = ev.target.result;
+          localStorage.setItem('incidencias_estado', JSON.stringify(stored));
+        };
+        reader.readAsDataURL(file);
+      } else {
+        localStorage.setItem('incidencias_estado', JSON.stringify(stored));
+      }
+
+      // Restaurar UI
+      applyFilter(document.querySelector('.tab[aria-selected="true"]').dataset.filter || 'todas');
+      closeModal();
+    });
+
+    // Al cargar, aplicar estado guardado
+    function restoreFromStorage(){
+      const stored = JSON.parse(localStorage.getItem('incidencias_estado') || '{}');
+      Object.keys(stored).forEach(id=>{
+        const rec = stored[id];
+        const card = document.querySelector('.card[data-id="'+id+'"]');
+        if(!card) return;
+        card.dataset.status = rec.status;
+        const estadoSpan = card.querySelector('.estado');
+        if(estadoSpan){
+          estadoSpan.classList.toggle('abierta', rec.status === 'abierta');
+          estadoSpan.classList.toggle('cerrada', rec.status === 'cerrada');
+          estadoSpan.textContent = rec.status === 'abierta' ? 'Abierta' : 'Cerrada';
+        }
+        if(rec.closed_at){
+          let closedEl = card.querySelector('.cerrada-fecha');
+          if(!closedEl){
+            const meta = card.querySelector('.meta');
+            meta.innerHTML = meta.innerHTML + '<br>Cerrada el: <span class="cerrada-fecha">'+rec.closed_at+'</span>';
+          } else {
+            closedEl.textContent = rec.closed_at;
+          }
+        }
+      });
+    }
+
+    // Inicializar
+    restoreFromStorage();
+    applyFilter('abierta'); // por defecto
+
+    // Accesibilidad: atajos teclado para cerrar modal (Esc)
+    document.addEventListener('keydown',(e)=>{
+      if(e.key === 'Escape' && modalBackdrop.style.display === 'flex') closeModal();
+    });
+  </script>
+</body>
+</html>
